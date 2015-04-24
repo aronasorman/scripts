@@ -8,11 +8,17 @@ import subprocess
 
 parser = argparse.ArgumentParser(description="Clone a Gihub repo in the right directory. Set up easy jump points too.")
 parser.add_argument("repo", metavar="repo", type=str,
-                    help="Github repo link with {username}/{repo name} as format (e.g. torvalds/linux)")
-parser.add_argument("--shallow", dest="shallow", action="store_true", default=False,
-                    help="When specified, clone the repo with depth=1.")
+                    help="""Github repo link with {username}/{repo name} as format
+                    (e.g. torvalds/linux).""")
 parser.add_argument("--branch", metavar="branch", default="master",
                     help="Branch to check out. Defaults to master.")
+parser.add_argument("--shallow", dest="shallow", action="store_true", default=False,
+                    help="When specified, clone the repo with depth=1.")
+parser.add_argument("--gdbsource", dest="is_source", action="store_true", default=False,
+                    help='''When specified, the repo to be cloned is treated as a source of
+                    special interest, and placed in a directory along
+                    with other special interest repos. Useful for GDB
+                    debugging.''')
 
 home_path = pathlib.Path(os.path.expanduser("~"))
 src_path = home_path / "src"
