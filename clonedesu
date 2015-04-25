@@ -86,7 +86,7 @@ def set_marks(repo_path):
 
 
 def add_repo_to_gdb_source_path(path):
-    gdbinit_path = os.path.expanduser("~/.gdbinit")
+    gdbinit_path = os.path.expanduser("~/.gdbinit-custom")
     with open(gdbinit_path, "a") as f:
         f.write("dir {}\n".format(path))
 
