@@ -96,6 +96,11 @@ def add_repo_to_gdb_source_path(path):
         f.write("dir {}\n".format(repo_git_path))
 
 
+def generate_tags(path):
+    os.chdir(path)
+    subprocess.call("ctags -R -e .", shell=True)
+
+
 def main(repostr, shallow, branch, gdbsource):
     username, repo = extract_repo_and_username(repostr)
     github_username_path = get_github_path(username)
@@ -110,6 +115,7 @@ def main(repostr, shallow, branch, gdbsource):
     else:
         repo_path = clone_repo_for_dev(username, repo, shallow, branch)
 
+    generate_tags(repo_path)
     set_marks(repo_path)
 
 
