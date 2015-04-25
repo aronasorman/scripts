@@ -22,6 +22,7 @@ parser.add_argument("--gdbsource", dest="is_source", action="store_true", defaul
 
 home_path = pathlib.Path(os.path.expanduser("~"))
 src_path = home_path / "src"
+gdb_src_path = src_path / "lib"
 
 
 def extract_repo_and_username(repostr):
@@ -41,7 +42,7 @@ def ensure_dir(path):
         pass
 
 
-def clone_repo(username, repo, shallow, branch):
+def clone_repo_for_dev(username, repo, shallow, branch):
     clone_url = "git@github.com:{username}/{repo}.git".format(username=username,
                                                               repo=repo)
     github_path = get_github_path(username)
@@ -52,6 +53,21 @@ def clone_repo(username, repo, shallow, branch):
     command = command_template.format(clone_url=clone_url,
                                       repo_path=repo_path,
                                       shallow_arg=shallow_arg,
+                                      branch_arg=branch_arg)
+    print("Running command {}".format(command))
+    subprocess.call(command, shell=True)
+    return repo_path
+
+
+def clone_repo_for_gdb(username, repo, branch):
+    clone_url = "git@github.com:{username}/{repo}.git".format(username=username,
+                                                              repo=repo)
+    repo_path = gdb_src_path / repo
+    command_template = "git clone {clone_url} {repo_path} {branch_arg} --depth 1"
+    branch_arg = "--branch {}".format(branch)
+
+    command = command_template.format(clone_url=clone_url,
+                                      repo_path=repo_path,
                                       branch_arg=branch_arg)
     print("Running command {}".format(command))
     subprocess.call(command, shell=True)
@@ -69,16 +85,37 @@ def set_marks(repo_path):
     os.symlink(repo_path.as_posix(), repo_mark_path.as_posix())
 
 
-def main(repostr, shallow, branch):
+def add_repo_to_gdb_source_path(path):
+    gdbinit_path = os.path.expanduser("~/.gdbinit")
+    with open(gdbinit_path, "a") as f:
+        f.write("dir {}\n".format(path))
+
+        # add the repo's .git path as well, in case we have .. in dbg
+        # symbols
+        repo_git_path = path / ".git"
+        f.write("dir {}\n".format(repo_git_path))
+
+
+def main(repostr, shallow, branch, gdbsource):
     username, repo = extract_repo_and_username(repostr)
     github_username_path = get_github_path(username)
 
-    # create the github username path first, if it doesn't exist
+    # create the paths where we store repos
     ensure_dir(github_username_path)
-    repo_path = clone_repo(username, repo, shallow, branch)
+    ensure_dir(gdb_src_path)
+
+    if gdbsource:
+        repo_path = clone_repo_for_gdb(username, repo, branch)
+        add_repo_to_gdb_source_path(repo_path)
+    else:
+        repo_path = clone_repo_for_dev(username, repo, shallow, branch)
+
     set_marks(repo_path)
 
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    main(repostr=args.repo, shallow=args.shallow, branch=args.branch)
+    main(repostr=args.repo,
+         shallow=args.shallow,
+         branch=args.branch,
+         gdbsource=args.is_source)
