@@ -97,7 +97,7 @@ def add_repo_to_gdb_source_path(path):
 
 
 def generate_tags(path):
-    os.chdir(path)
+    os.chdir(path.as_posix())
     subprocess.call("ctags -R -e .", shell=True)
 
 
